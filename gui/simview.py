@@ -126,21 +126,36 @@ class SimView(gtk.VBox):
         self.netview.save_as_svg(filename)
 
     def on_cursor_changed(self):
+        # TESTING BRANCH AND INDEX
+        self.config.simview.app.console_write("index: {0} ".format(self.sequence_view.get_cell(0)))
+        self.config.simview.app.console_write("branch: {0} ".format(self.sequence_view.get_cell(1)))
         path = self.sequence_view.get_selection_path()
         if path is None:
             return
         self.simulation.set_runinstance_from_history(path[0])
+        
+    def set_state(self):
+        index = self.sequence_view.get_cell(0)
+        branch = self.sequence_view.get_cell(1)
+        parent = self.sequence_view.get_parent()
+        self.simulation.set_state(index, branch, parent)
 
     def _history(self):
         box = gtk.VBox()
 
         self.sequence_view = controlseq.SequenceView(show_init_state=True)
-        self.sequence_view.set_size_request(130, 100)
+        self.sequence_view.set_size_request(180, 100)
         self.simulation.sequence.view = self.sequence_view
         self.sequence_view.connect_view("cursor-changed",
                                         lambda w: self.on_cursor_changed())
         box.pack_start(self.sequence_view, True, True)
 
+        button = gtk.Button("Set state")
+        button.connect("clicked", 
+                       lambda w: self.set_state())
+        self.show_current_button = button
+        
+        box.pack_start(button, False, False)
         button = gtk.Button("Show current")
         button.connect("clicked",
                        lambda w: self.simulation.set_runinstance_from_history(-1))

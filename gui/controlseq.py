@@ -132,15 +132,18 @@ class ControlSequence:
             self.view.add_receive(process, from_process)
 
 
-class SequenceView(gtkutils.SimpleList):
+class SequenceView(gtkutils.SimpleTree):
 
     def __init__(self, sequence=None, show_init_state=None):
-        gtkutils.SimpleList.__init__(
-            self, (("P", str), ("Action|markup", str), ("Arg", str)))
+        gtkutils.SimpleTree.__init__(
+            self, (("I", str), ("B", str), ("P", str), ("Action|markup", str), ("Arg", str),))
         if show_init_state:
-            self.append(("", "<span background='grey'>Init</span>", ""))
+            self.append(None, ("0", "0", "", "<span background='grey'>Init</span>", ""))
         if sequence:
             self.load_sequence(sequence)
+        self.branch_id = 0
+        self.index_id = 1
+        self.pare = None
 
     def load_sequence(self, sequence):
         self.clear()
@@ -150,24 +153,39 @@ class SequenceView(gtkutils.SimpleList):
                          self.add_receive)
 
     def add_fire(self, process_id, transition):
-        self.append((str(process_id),
+        self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<span background='green'>Fire</span>",
                      transition))
+        self.index_id = self.index_id + 1
 
     def add_transition_start(self, process_id, transition):
-        self.append((str(process_id),
+        self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<span background='lightgreen'>StartT</span>",
                      transition))
+        self.index_id = self.index_id + 1
 
     def add_transition_finish(self, process_id):
-        self.append((str(process_id),
+        self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<span background='#FF7070'>FinishT</span>",
                      ""))
+        self.index_id = self.index_id + 1
 
     def add_receive(self, process_id, from_process):
-        self.append((str(process_id),
+        self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<span background='lightblue'>Receive</span>",
                      str(from_process)))
+        self.index_id = self.index_id + 1
+        
+    #delete
+    def add_branch(self):
+        self.append(self)
+    
+    def set_branch_id(self, branch):
+        self.branch_id = branch
+        self.index_id = 0
+        
+    def set_parent(self, par):
+        self.pare = par
 
 
 class SequenceListWidget(gtk.HPaned):

@@ -1,6 +1,7 @@
 
 #include "cailie.h"
 #include "listener.h"
+#include "branch.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -189,6 +190,51 @@ void Listener::process_commands(FILE *comm_in, FILE *comm_out)
 			continue;
 		}
 
+		if (check_prefix(line, "SET_STATE")){
+			unsigned int index;
+			unsigned int branch;
+			if(2 != sscanf(line, "SET_STATE %i %i", &branch, &index)){
+				fprintf(comm_out, "Invalid Parameters\n");
+				continue;
+			}
+
+			bool result = true;
+
+			if(Branches.empty()){
+				fprintf(comm_out, "No states in history\n");
+				result = false;
+				continue;
+			}
+
+			else{
+
+				if (Branches.size() < branch){
+					fprintf(comm_out, "Invalid index of branch\n");
+					result = false;
+				}
+
+				else{
+					/*
+					Branch *NewBranch = NULL;
+					NewBranch = Branches[branch];
+					CurrentBranch = branch;
+					if(NewBranch->is_empty()){
+						fprintf(comm_out, "No states in current branch\n");
+					}
+					else{
+						set_state();
+					}
+					*/
+					//CurrentBranch = branch;
+
+					set_state((int)branch, (int)index);
+				}
+
+			}
+			write_status(comm_out, result);
+			continue;
+		}
+
 		if (check_prefix(line, "FIRE")) {
 			if (processes[0]->quit_flag) {
 				fprintf(comm_out, "Process is terminated\n");
@@ -210,6 +256,8 @@ void Listener::process_commands(FILE *comm_in, FILE *comm_out)
 				fprintf(comm_out, "Invalid transition\n");
 				continue;
 			}
+
+			save_state();
 
 			bool result;
 			if (phases == 1) {
@@ -258,6 +306,9 @@ void Listener::process_commands(FILE *comm_in, FILE *comm_out)
 				fprintf(comm_out, "Invalid parameters\n");
 				continue;
 			}
+
+			save_state();
+
 			bool result = state->receive(process_id, origin_id);
 			write_status(comm_out, result);
 			continue;
@@ -290,6 +341,36 @@ void Listener::prepare_state()
 void Listener::cleanup_state()
 {
 	delete state;
+}
+
+void Listener::save_state()
+{
+	Branch *CurrBranch = NULL;
+
+	if(Branches.empty()){
+		CurrentBranch = 0;
+		CurrBranch = new Branch();
+
+		Branches.push_back(CurrBranch);
+	}
+	else{
+		CurrBranch = Branches[CurrentBranch];
+	}
+
+	CurrBranch->save_state(state);
+}
+
+void Listener::set_state(int branch, int index)
+{
+	Branch *CurrBranch = NULL;
+	CurrBranch = Branches[branch];
+	state = CurrBranch->set_state(index);
+
+	Branch *NewBranch = NULL;
+	NewBranch = new Branch();
+	NewBranch->set_parent(branch, index);
+	CurrentBranch = Branches.size();
+	Branches.push_back(NewBranch);
 }
 
 

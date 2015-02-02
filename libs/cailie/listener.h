@@ -1,4 +1,3 @@
-
 #ifndef CAILIE_LISTENER_H
 #define CAILIE_LISTENER_H
 
@@ -6,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "state.h"
+#include "branch.h"
 
 namespace ca {
 
@@ -40,13 +40,22 @@ class Listener {
 		void prepare_state();
 		void cleanup_state();
 
+		void save_state();
+		void set_state(int branch, int index);
+
 		int process_count;
 		Process **processes;
 		int listen_socket;
 		pthread_t thread;
 		pthread_barrier_t *start_barrier;
-		State *state;
 		std::vector<std::string> sequence;
+		State *state;
+
+		int CurrentBranch;
+		std::vector<Branch*> Branches;
+
+		//std::vector<State*> History;
+
 };
 
 }

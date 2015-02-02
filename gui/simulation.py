@@ -48,6 +48,7 @@ class Simulation(EventSource):
         self.runinstance = None
         self.sequence = controlseq.ControlSequence()
         self.history_instances = []
+        self.current_branch = 0
 
     def connect(self, host, port):
         def inited():
@@ -293,4 +294,14 @@ class Simulation(EventSource):
         self.emit_event("changed", False)
 
     def is_last_instance_active(self):
-        return self.history_instances and self.history_instances[-1] == self.runinstance
+        #return self.history_instances and self.history_instances[-1] == self.runinstance
+        return True
+    
+    def set_state(self, index, branch, parent):
+        #self.controller.run_command("SET_STATE {0} {1}".format(branch, index), None)
+        print("SET_STATE {0} {1}".format(branch, index))
+        self.current_branch = self.current_branch + 1
+        self.sequence.view.set_branch_id(self.current_branch)
+        #self.sequence.view.add_branch()
+        self.sequence.view.set_parent(parent)
+        

@@ -183,6 +183,18 @@ class SimpleListBase(gtk.ScrolledWindow):
             model.remove(i)
             return v
         return None
+    
+    def get_cell (self, column):
+        model ,i = self.view.get_selection().get_selected()
+        if i is not None:
+            v = model.get_value(i,column)
+            return v
+        return None
+    
+    def get_parent(self):
+        selection = self.view.get_selection()
+        selected = selection.get_selected()
+        return selected[1]
 
     def get_column(self, column):
         return [ self.store.get_value(row.iter, column) for row in self.store ]
@@ -230,6 +242,7 @@ class SimpleTree(SimpleListBase):
         SimpleListBase.__init__(self, columns, gtk.TreeStore)
 
     def append(self, parent, data):
+        #print(type(parent))
         return self.store.append(parent, data)
 
     def find(self, obj, column):

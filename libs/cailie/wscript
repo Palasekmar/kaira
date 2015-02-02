@@ -5,6 +5,7 @@ source_files =  (
     "thread.cpp",
     "messages.cpp",
     "listener.cpp",
+    "branch.cpp",
     "net.cpp",
     "output.cpp",
     "packing.cpp",
