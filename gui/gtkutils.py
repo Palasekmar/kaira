@@ -244,6 +244,9 @@ class SimpleTree(SimpleListBase):
     def append(self, parent, data):
         #print(type(parent))
         return self.store.append(parent, data)
+    
+    def expand_all_nodes(self):
+        self.view.expand_all()
 
     def find(self, obj, column):
         def scan(i):

@@ -22,6 +22,7 @@ import gtk
 import gtkutils
 import mainwindow
 import controlseq
+import time
 from netview import NetView, NetViewCanvasConfig
 
 class SimViewTab(mainwindow.Tab):
@@ -93,7 +94,25 @@ class SimCanvasConfig(NetViewCanvasConfig):
             if transition.id in enabled:
                transition.box.highlight = (0, 255, 0, 0.85)
 
+    def automatically_run1(self):
+        self.random_fire()
+            #print(self.simulation.state)
+    
+    def automatically_run(self):
+        while True:
+            if self.simulation.state == "ready":
+                self.random_fire()
+            e = self.perspective.get_enabled_transitions()
+            if len(e) == 0:
+                break
 
+    def random_fire(self):
+        enabled = self.perspective.get_enabled_transitions()
+        for transition in self.net.transitions():
+            if transition.id in enabled:
+                self.fire_transition(transition)
+        
+        
 class SimView(gtk.VBox):
 
     def __init__(self, app, simulation):
@@ -132,7 +151,10 @@ class SimView(gtk.VBox):
         path = self.sequence_view.get_selection_path()
         if path is None:
             return
-        self.simulation.set_runinstance_from_history(path[0])
+        index = self.sequence_view.get_cell(0)
+        branch = self.sequence_view.get_cell(1)
+        self.simulation.set_runinstance_from_history(int(index), int(branch))
+        #self.simulation.set_runinstance_from_history(path[0])
         
     def set_state(self):
         index = self.sequence_view.get_cell(0)
@@ -206,6 +228,15 @@ class SimView(gtk.VBox):
         button.set_stock_id(gtk.STOCK_EXECUTE)
         toolbar.add(button)
         self.button_auto_receive = button
+        
+        toolbar.add(gtk.SeparatorToolItem())
+        
+        button = gtk.ToolButton(None)
+        button.set_tooltip_text("Automatically run")
+        button.set_stock_id(gtk.STOCK_MEDIA_PLAY)
+        button.connect("clicked", lambda w: self.config.automatically_run())
+        toolbar.add(button)
+        
         return toolbar
 
 

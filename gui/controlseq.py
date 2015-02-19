@@ -157,28 +157,28 @@ class SequenceView(gtkutils.SimpleTree):
                      "<span background='green'>Fire</span>",
                      transition))
         self.index_id = self.index_id + 1
+        self.expand_all_nodes()
 
     def add_transition_start(self, process_id, transition):
         self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<span background='lightgreen'>StartT</span>",
                      transition))
         self.index_id = self.index_id + 1
+        self.expand_all_nodes()
 
     def add_transition_finish(self, process_id):
         self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<span background='#FF7070'>FinishT</span>",
                      ""))
         self.index_id = self.index_id + 1
+        self.expand_all_nodes()
 
     def add_receive(self, process_id, from_process):
         self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<span background='lightblue'>Receive</span>",
                      str(from_process)))
         self.index_id = self.index_id + 1
-        
-    #delete
-    def add_branch(self):
-        self.append(self)
+        self.expand_all_nodes()
     
     def set_branch_id(self, branch):
         self.branch_id = branch
