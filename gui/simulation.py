@@ -305,13 +305,22 @@ class Simulation(EventSource):
         #return self.history_instances and self.history_instances[-1] == self.runinstance
         return True
     
-    def set_state(self, index, branch, parent):
-        self.current_branch = self.current_branch + 1
-        self.sequence.view.set_branch_id(self.current_branch)
-        self.sequence.view.set_parent(parent)
-        self.append_history_instances()
-        self.controller.run_command("SET_STATE {0} {1}".format(branch, index), None)
-        print("SET_STATE {0} {1}".format(branch, index))
+    def set_state(self, index, branch, parent, ok_callback=None, fail_callback=None, query_reports=True):
+        def callback():
+            self.current_branch = self.current_branch + 1
+            self.sequence.view.set_branch_id(self.current_branch)
+            self.sequence.view.set_parent(parent)
+            self.append_history_instances()
+            if query_reports:
+                self.query_reports(ok_callback)
+            elif ok_callback:
+                ok_callback()
+        if self.controller and self.check_ready():
+            command = "SET_STATE {0} {1}".format(branch, index)
+            self.controller.run_command_expect_ok(command, callback, fail_callback, self.set_state_ready)
+            
+        #self.controller.run_command("SET_STATE {0} {1}".format(branch, index), None)
+        #print("SET_STATE {0} {1}".format(branch, index))
 
     def append_history_instances(self):
         self.history_branches.append(self.history_instances)
