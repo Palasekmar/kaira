@@ -44,3 +44,12 @@ int Branch::get_parent_branch(){
 int Branch::get_parent_id(){
 	return ParentId;
 }
+
+bool Branch::is_state_last(int index){
+	bool result = false;
+	int size = History.size();
+	if(size == index){
+		result = true;
+	}
+	return result;
+}

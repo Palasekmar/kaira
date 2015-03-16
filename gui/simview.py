@@ -94,25 +94,32 @@ class SimCanvasConfig(NetViewCanvasConfig):
             if transition.id in enabled:
                transition.box.highlight = (0, 255, 0, 0.85)
 
-    def automatically_run1(self):
-        self.random_fire()
-            #print(self.simulation.state)
+    def automatically_fire_transitions(self, transition):
+        perspective = self.view.get_perspective()
+        ids = [ i.process_id for i in perspective.net_instances.values()
+                if i.enabled_transitions is not None and transition.id
+                in i.enabled_transitions ]
+        if not ids:
+            return
+        process_id = self.simulation.random.choice(ids)
+        if self.simview.button_auto_receive.get_active():
+            callback = lambda: self.automatically_run()
+        else:
+            callback = None
+        self.simulation.fire_transition(transition.id, process_id,
+                                        self.simview.get_fire_phases(),
+                                        callback)
     
     def automatically_run(self):
-        while True:
-            if self.simulation.state == "ready":
-                self.random_fire()
-            e = self.perspective.get_enabled_transitions()
-            if len(e) == 0:
-                break
+        if self.simulation.state == "ready":
+            enabled = self.perspective.get_enabled_transitions()
+            for transition in self.net.transitions():
+                if transition.id in enabled:
+                    self.automatically_fire_transitions(transition)
+        e = self.perspective.get_enabled_transitions()
+        if len(e) == 0:
+            return True
 
-    def random_fire(self):
-        enabled = self.perspective.get_enabled_transitions()
-        for transition in self.net.transitions():
-            if transition.id in enabled:
-                self.fire_transition(transition)
-        
-        
 class SimView(gtk.VBox):
 
     def __init__(self, app, simulation):
@@ -145,23 +152,25 @@ class SimView(gtk.VBox):
         self.netview.save_as_svg(filename)
 
     def on_cursor_changed(self):
-        # TESTING BRANCH AND INDEX
-        self.config.simview.app.console_write("index: {0} ".format(self.sequence_view.get_cell(0)))
-        self.config.simview.app.console_write("branch: {0} ".format(self.sequence_view.get_cell(1)))
         path = self.sequence_view.get_selection_path()
         if path is None:
             return
         index = self.sequence_view.get_cell(0)
         branch = self.sequence_view.get_cell(1)
         self.simulation.set_runinstance_from_history(int(index), int(branch))
-        #self.simulation.set_runinstance_from_history(path[0])
         
     def set_state(self):
         index = self.sequence_view.get_cell(0)
         branch = self.sequence_view.get_cell(1)
         parent = self.sequence_view.get_parent()
+        
+        path = self.sequence_view.get_selection_path()
+        self.sequence_view.path = path
+        self.sequence_view.bold_row(path)
+        self.sequence_view.unbold_row(self.sequence_view.current_iter)
+        
         self.simulation.set_state(index, branch, parent)
-
+        
     def _history(self):
         box = gtk.VBox()
 

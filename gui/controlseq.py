@@ -138,12 +138,14 @@ class SequenceView(gtkutils.SimpleTree):
         gtkutils.SimpleTree.__init__(
             self, (("I", str), ("B", str), ("P", str), ("Action|markup", str), ("Arg", str),))
         if show_init_state:
-            self.append(None, ("0", "0", "", "<span background='grey'>Init</span>", ""))
+            self.append(None, ("0", "0", "", "<b><span background='grey'>Init</span></b>", ""))
         if sequence:
             self.load_sequence(sequence)
         self.branch_id = 0
         self.index_id = 1
-        self.pare = None
+        self._parent = None
+        self.current_iter = self.get_first_iter()
+        self.path = None
 
     def load_sequence(self, sequence):
         self.clear()
@@ -153,40 +155,81 @@ class SequenceView(gtkutils.SimpleTree):
                          self.add_receive)
 
     def add_fire(self, process_id, transition):
-        self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
-                     "<span background='green'>Fire</span>",
+        self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
+                     "<b><span background='green'>Fire</span></b>",
                      transition))
         self.index_id = self.index_id + 1
         self.expand_all_nodes()
+        self.unbold_prev_row()
 
     def add_transition_start(self, process_id, transition):
-        self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
-                     "<span background='lightgreen'>StartT</span>",
+        self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
+                     "<b><span background='lightgreen'>StartT</span></b>",
                      transition))
         self.index_id = self.index_id + 1
         self.expand_all_nodes()
+        self.unbold_prev_row()
 
     def add_transition_finish(self, process_id):
-        self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
-                     "<span background='#FF7070'>FinishT</span>",
+        self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
+                     "<b><span background='#FF7070'>FinishT</span></b>",
                      ""))
         self.index_id = self.index_id + 1
         self.expand_all_nodes()
+        self.unbold_prev_row()
 
     def add_receive(self, process_id, from_process):
-        self.append(self.pare, (str(self.index_id), str(self.branch_id), str(process_id),
-                     "<span background='lightblue'>Receive</span>",
+        self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
+                     "<b><span background='lightblue'>Receive</span></b>",
                      str(from_process)))
         self.index_id = self.index_id + 1
         self.expand_all_nodes()
+        self.unbold_prev_row()
     
     def set_branch_id(self, branch):
         self.branch_id = branch
         self.index_id = 0
         
     def set_parent(self, par):
-        self.pare = par
-
+        self._parent = par
+        
+    def set_current_row(self, curr):
+        self.current_row = curr
+        
+    def add_bold_tags(self, str):
+        str = "<b>" + str + "</b>"
+        return str
+        
+    def remove_bold_tags(self, str):
+        return str[3:-4]
+    
+    def modify_path(self, path):
+        path = path + (0,)
+        return path
+    
+    def unbold_prev_row(self):
+        if self.path is not None:
+            self.unbold_row(self.get_iter(self.path))
+            self.path = self.modify_path(self.path)
+            self.current_iter = self.get_iter(self.path)
+            self.path = None
+        else:
+            self.unbold_row(self.current_iter)
+            self.current_iter = self.iter_next(self.current_iter)
+    
+    def unbold_row(self, iter):
+        row = self.get_row(iter)
+        edit = self.remove_bold_tags(row[3])
+        newrow = (row[0], row[1], row[2], edit, row[4])
+        self.update_row(self.get_path(iter), newrow)
+        
+    def bold_row(self, path):
+        iter = self.get_iter(path)
+        row = self.get_row(iter)
+        edit = self.add_bold_tags(row[3])
+        newrow = (row[0], row[1], row[2], edit, row[4])
+        self.update_row(path, newrow)
+        
 
 class SequenceListWidget(gtk.HPaned):
 

@@ -183,18 +183,6 @@ class SimpleListBase(gtk.ScrolledWindow):
             model.remove(i)
             return v
         return None
-    
-    def get_cell (self, column):
-        model ,i = self.view.get_selection().get_selected()
-        if i is not None:
-            v = model.get_value(i,column)
-            return v
-        return None
-    
-    def get_parent(self):
-        selection = self.view.get_selection()
-        selected = selection.get_selected()
-        return selected[1]
 
     def get_column(self, column):
         return [ self.store.get_value(row.iter, column) for row in self.store ]
@@ -216,7 +204,45 @@ class SimpleListBase(gtk.ScrolledWindow):
 
     def hide_headers(self):
         self.view.set_headers_visible(False)
-
+        
+    #My
+    def get_cell (self, column):
+        model ,i = self.view.get_selection().get_selected()
+        if i is not None:
+            v = model.get_value(i,column)
+            return v
+        return None
+    
+    def get_parent(self):
+        selection = self.view.get_selection()
+        selected = selection.get_selected()
+        return selected[1]
+        
+    def get_first_iter(self):
+        return self.store.get_iter_first()
+    
+    def get_row_cell(self, iter):
+        return self.store.get_value(iter, 3)
+    
+    def get_row(self, iter):
+        row = (self.store.get_value(iter, 0),
+               self.store.get_value(iter, 1),
+               self.store.get_value(iter, 2),
+               self.store.get_value(iter, 3),
+               self.store.get_value(iter, 4))
+        return row
+                
+    def update_row(self, path, row):
+        self.store[path] = row
+        
+    def get_path(self, iter):
+        return self.store.get_path(iter)
+    
+    def iter_next(self, iter):
+        return self.store.iter_next(iter)
+          
+    def get_iter(self, path):
+        return self.store.get_iter(path)
 
 class SimpleList(SimpleListBase):
 
@@ -242,7 +268,6 @@ class SimpleTree(SimpleListBase):
         SimpleListBase.__init__(self, columns, gtk.TreeStore)
 
     def append(self, parent, data):
-        #print(type(parent))
         return self.store.append(parent, data)
     
     def expand_all_nodes(self):
@@ -257,4 +282,4 @@ class SimpleTree(SimpleListBase):
                 if self.store.get_value(i, column) == obj:
                     return i
                 i = self.store.iter_next(i)
-        return scan(self.store.get_iter_first())
+        return scan(self.store.get_iter_first())       

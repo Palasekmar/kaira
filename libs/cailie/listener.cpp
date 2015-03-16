@@ -193,6 +193,9 @@ void Listener::process_commands(FILE *comm_in, FILE *comm_out)
 		if (check_prefix(line, "SET_STATE")){
 			unsigned int index;
 			unsigned int branch;
+
+			save_state();
+
 			if(2 != sscanf(line, "SET_STATE %i %i", &branch, &index)){
 				fprintf(comm_out, "Invalid Parameters\n");
 				continue;
@@ -214,18 +217,6 @@ void Listener::process_commands(FILE *comm_in, FILE *comm_out)
 				}
 
 				else{
-					/*
-					Branch *NewBranch = NULL;
-					NewBranch = Branches[branch];
-					CurrentBranch = branch;
-					if(NewBranch->is_empty()){
-						fprintf(comm_out, "No states in current branch\n");
-					}
-					else{
-						set_state();
-					}
-					*/
-					//CurrentBranch = branch;
 
 					set_state((int)branch, (int)index);
 				}

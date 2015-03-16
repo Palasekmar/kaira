@@ -23,6 +23,7 @@ class Branch {
 		void set_parent(int branch,int id);
 		int get_parent_branch();
 		int get_parent_id();
+		bool is_state_last(int index);
 
 };
 
