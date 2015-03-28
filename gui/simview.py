@@ -23,6 +23,7 @@ import gtkutils
 import mainwindow
 import controlseq
 import time
+import random
 from netview import NetView, NetViewCanvasConfig
 
 class SimViewTab(mainwindow.Tab):
@@ -94,6 +95,13 @@ class SimCanvasConfig(NetViewCanvasConfig):
             if transition.id in enabled:
                transition.box.highlight = (0, 255, 0, 0.85)
 
+    def automatically_run(self):
+        if self.simulation.state == "ready":
+            enabled = self.random_enabled_transition()
+            for transition in self.net.transitions():
+                if transition.id in enabled:
+                    self.automatically_fire_transitions(transition)
+
     def automatically_fire_transitions(self, transition):
         perspective = self.view.get_perspective()
         ids = [ i.process_id for i in perspective.net_instances.values()
@@ -102,23 +110,16 @@ class SimCanvasConfig(NetViewCanvasConfig):
         if not ids:
             return
         process_id = self.simulation.random.choice(ids)
-        if self.simview.button_auto_receive.get_active():
-            callback = lambda: self.automatically_run()
-        else:
-            callback = None
+        callback = lambda: self.automatically_run()
         self.simulation.fire_transition(transition.id, process_id,
                                         self.simview.get_fire_phases(),
                                         callback)
     
-    def automatically_run(self):
-        if self.simulation.state == "ready":
-            enabled = self.perspective.get_enabled_transitions()
-            for transition in self.net.transitions():
-                if transition.id in enabled:
-                    self.automatically_fire_transitions(transition)
-        e = self.perspective.get_enabled_transitions()
-        if len(e) == 0:
-            return True
+    def random_enabled_transition(self):
+        enabled = self.perspective.get_enabled_transitions()
+        enabled_list = list(enabled)
+        random_tran = random.sample(enabled_list, 1)
+        return(random_tran)
 
 class SimView(gtk.VBox):
 
