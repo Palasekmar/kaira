@@ -185,6 +185,11 @@ class SequenceView(gtkutils.SimpleTree):
         self.index_id = self.index_id + 1
         self.expand_all_nodes()
         self.unbold_prev_row()
+        
+    def make_first(self, parent):
+        self.append(parent, ("0", str(self.branch_id), "", "<b><span background='grey'>SetState</span></b>", ""))
+        self.index_id = self.index_id + 1
+        self.expand_all_nodes()
     
     def set_branch_id(self, branch):
         self.branch_id = branch
@@ -209,9 +214,10 @@ class SequenceView(gtkutils.SimpleTree):
     
     def unbold_prev_row(self):
         if self.path is not None:
-            self.unbold_row(self.get_iter(self.path))
             self.path = self.modify_path(self.path)
-            self.current_iter = self.get_iter(self.path)
+            self.unbold_row(self.get_iter(self.path))
+            iter = self.get_iter(self.path)
+            self.current_iter = self.iter_next(iter)
             self.path = None
         else:
             self.unbold_row(self.current_iter)

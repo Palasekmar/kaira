@@ -359,6 +359,7 @@ void Listener::set_state(int branch, int index)
 
 	Branch *NewBranch = NULL;
 	NewBranch = new Branch();
+	NewBranch->save_state(state);
 	NewBranch->set_parent(branch, index);
 	CurrentBranch = Branches.size();
 	Branches.push_back(NewBranch);

@@ -96,11 +96,12 @@ class SimCanvasConfig(NetViewCanvasConfig):
                transition.box.highlight = (0, 255, 0, 0.85)
 
     def automatically_run(self):
-        if self.simulation.state == "ready":
-            enabled = self.random_enabled_transition()
-            for transition in self.net.transitions():
-                if transition.id in enabled:
-                    self.automatically_fire_transitions(transition)
+        if self.simview.automatically_run is True:
+            if self.simulation.state == "ready":
+                enabled = self.random_enabled_transition()
+                for transition in self.net.transitions():
+                    if transition.id in enabled:
+                        self.automatically_fire_transitions(transition)
 
     def automatically_fire_transitions(self, transition):
         perspective = self.view.get_perspective()
@@ -142,6 +143,8 @@ class SimView(gtk.VBox):
         self.button_run_phase12.set_active(True)
         self.button_auto_receive.set_active(True)
         self.show_all()
+        
+        self.automatically_run = True
 
     def get_fire_phases(self):
         if self.button_run_phase1.get_active():
@@ -160,6 +163,13 @@ class SimView(gtk.VBox):
         branch = self.sequence_view.get_cell(1)
         self.simulation.set_runinstance_from_history(int(index), int(branch))
         
+    def start_automatically_run(self):
+        self.automatically_run = True
+        self.config.automatically_run()
+        
+    def stop_automatically_run(self):
+        self.automatically_run = False        
+    
     def set_state(self):
         index = self.sequence_view.get_cell(0)
         branch = self.sequence_view.get_cell(1)
@@ -167,10 +177,18 @@ class SimView(gtk.VBox):
         
         path = self.sequence_view.get_selection_path()
         self.sequence_view.path = path
-        self.sequence_view.bold_row(path)
         self.sequence_view.unbold_row(self.sequence_view.current_iter)
         
         self.simulation.set_state(index, branch, parent)
+        
+    def allow_set_state(self):
+        index = self.sequence_view.get_cell(0)
+        branch = self.sequence_view.get_cell(1)
+        d = (index, branch)
+        if d in self.simulation.history_set:
+            return False
+        else:
+            return True
         
     def _history(self):
         box = gtk.VBox()
@@ -185,12 +203,12 @@ class SimView(gtk.VBox):
         button = gtk.Button("Set state")
         button.connect("clicked", 
                        lambda w: self.set_state())
-        self.show_current_button = button
+        self.set_state_button = button
         
         box.pack_start(button, False, False)
         button = gtk.Button("Show current")
         button.connect("clicked",
-                       lambda w: self.simulation.set_runinstance_from_history(-1))
+                       lambda w: self.simulation.set_runinstance_from_history(-1, self.simulation.current_branch))
         self.show_current_button = button
 
         box.pack_start(button, False, False)
@@ -203,6 +221,7 @@ class SimView(gtk.VBox):
 
     def _simulation_changed(self, new_state):
         self.show_current_button.set_sensitive(not self.simulation.is_last_instance_active())
+        self.set_state_button.set_sensitive(self.allow_set_state())
         if new_state:
             self.sequence_view.unselect_all()
         self.netview.set_runinstance(self.simulation.runinstance)
@@ -244,7 +263,13 @@ class SimView(gtk.VBox):
         button = gtk.ToolButton(None)
         button.set_tooltip_text("Automatically run")
         button.set_stock_id(gtk.STOCK_MEDIA_PLAY)
-        button.connect("clicked", lambda w: self.config.automatically_run())
+        button.connect("clicked", lambda w: self.start_automatically_run())
+        toolbar.add(button)
+        
+        button = gtk.ToolButton(None)
+        button.set_tooltip_text("Stop automatically run")
+        button.set_stock_id(gtk.STOCK_MEDIA_STOP)
+        button.connect("clicked", lambda w: self.stop_automatically_run)
         toolbar.add(button)
         
         return toolbar

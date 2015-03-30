@@ -50,6 +50,7 @@ class Simulation(EventSource):
         self.history_branches = []
         self.history_instances = []
         self.current_branch = 0
+        self.history_set = []
 
     def connect(self, host, port):
         def inited():
@@ -132,7 +133,7 @@ class Simulation(EventSource):
                 runinstance.event_send(origin_id, 0, target_id, size, edge_id)
 
             runinstance.reset_last_event_info()
-            #TUKABEL :D
+            #ZDE
             self.runinstance = runinstance
             self.history_instances.append(runinstance)
 
@@ -299,8 +300,7 @@ class Simulation(EventSource):
         self.emit_event("changed", False)
 
     def is_last_instance_active(self):
-        #return self.history_instances and self.history_instances[-1] == self.runinstance
-        return True
+        return self.history_instances and self.history_instances[-1] == self.runinstance
     
     def set_state(self,
                   index,
@@ -313,6 +313,8 @@ class Simulation(EventSource):
             self.current_branch = self.current_branch + 1
             self.sequence.view.set_branch_id(self.current_branch)
             self.sequence.view.set_parent(parent)
+            self.sequence.view.make_first(parent)
+            self.history_set.append((index, branch))
         if self.controller and self.check_ready():
             command = "SET_STATE {0} {1}".format(branch, index)
             self.controller.run_command_expect_ok(command, callback, fail_callback, self.set_state_ready)
@@ -321,3 +323,4 @@ class Simulation(EventSource):
     def append_history_instances(self):
         self.history_branches.append(self.history_instances)
         self.history_instances = []
+        self.history_instances.append(self.runinstance)
