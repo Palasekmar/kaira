@@ -111,8 +111,8 @@ class SimpleListBase(gtk.ScrolledWindow):
 
         self.store = store_class(*[ c[1] for c in columns ])
         self.view = gtk.TreeView(self.store)
-        self.add(self.view)
-
+        self.add(self.view)        
+        
         for i, (cname, ctype) in enumerate(columns):
             if cname != "_":
                 tokens = cname.split("|")
@@ -272,6 +272,7 @@ class SimpleTree(SimpleListBase):
     
     def expand_all_nodes(self):
         self.view.expand_all()
+        self.view.set_enable_tree_lines(True)
 
     def find(self, obj, column):
         def scan(i):
