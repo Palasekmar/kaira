@@ -185,11 +185,6 @@ class SequenceView(gtkutils.SimpleTree):
         self.index_id = self.index_id + 1
         self.expand_all_nodes()
         self.unbold_prev_row()
-        
-    def make_first(self, parent):
-        self.append(parent, ("0", str(self.branch_id), "", "<b><span background='grey'>SetState</span></b>", ""))
-        self.index_id = self.index_id + 1
-        self.expand_all_nodes()
     
     def set_branch_id(self, branch):
         self.branch_id = branch
@@ -214,10 +209,13 @@ class SequenceView(gtkutils.SimpleTree):
     
     def unbold_prev_row(self):
         if self.path is not None:
-            self.path = self.modify_path(self.path)
             self.unbold_row(self.get_iter(self.path))
-            iter = self.get_iter(self.path)
-            self.current_iter = self.iter_next(iter)
+            path = self.modify_path(self.path)
+            self.current_iter = self.get_iter(path)
+            #path = self.modify_path(self.path)
+            #self.unbold_row(self.get_iter(path))
+            #iter = self.get_iter(path)
+            #self.current_iter = self.iter_next(iter)
             self.path = None
         else:
             self.unbold_row(self.current_iter)
@@ -235,8 +233,12 @@ class SequenceView(gtkutils.SimpleTree):
         edit = self.add_bold_tags(row[3])
         newrow = (row[0], row[1], row[2], edit, row[4])
         self.update_row(path, newrow)
+    
+    def get_current_coords(self):
+        index = self.index_id - 1
+        ret = [index, self.branch_id]
+        return ret
         
-
 class SequenceListWidget(gtk.HPaned):
 
     def __init__(self, project):

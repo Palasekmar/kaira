@@ -50,7 +50,8 @@ class Simulation(EventSource):
         self.history_branches = []
         self.history_instances = []
         self.current_branch = 0
-        self.history_set = []
+        self.setstate_state = False;
+        self.current_state = ()
 
     def connect(self, host, port):
         def inited():
@@ -134,6 +135,7 @@ class Simulation(EventSource):
 
             runinstance.reset_last_event_info()
             #ZDE
+            self.setstate_state = False;
             self.runinstance = runinstance
             self.history_instances.append(runinstance)
 
@@ -300,27 +302,35 @@ class Simulation(EventSource):
         self.emit_event("changed", False)
 
     def is_last_instance_active(self):
-        return self.history_instances and self.history_instances[-1] == self.runinstance
+        return self.history_instances and self.history_instances[-1] == self.runinstance or self.setstate_state == True
     
     def set_state(self,
                   index,
                   branch,
+                  path,
                   parent,
                   ok_callback=None,
                   fail_callback=None,
                   query_reports=True):
         def callback():
             self.current_branch = self.current_branch + 1
+            
             self.sequence.view.set_branch_id(self.current_branch)
             self.sequence.view.set_parent(parent)
-            self.sequence.view.make_first(parent)
-            self.history_set.append((index, branch))
+            self.sequence.view.bold_row(path)
+            self.sequence.view.path = path
+            self.sequence.view.unbold_row(self.sequence.view.current_iter)
+            
+            self.last_setstate = []
+            add = (index, branch)
+            self.last_setstate.append(add)
+
         if self.controller and self.check_ready():
             command = "SET_STATE {0} {1}".format(branch, index)
             self.controller.run_command_expect_ok(command, callback, fail_callback, self.set_state_ready)
             self.append_history_instances()
+            self.setstate_state = True;
 
     def append_history_instances(self):
         self.history_branches.append(self.history_instances)
         self.history_instances = []
-        self.history_instances.append(self.runinstance)

@@ -96,12 +96,16 @@ class SimCanvasConfig(NetViewCanvasConfig):
                transition.box.highlight = (0, 255, 0, 0.85)
 
     def automatically_run(self):
+        time.sleep(2)
         if self.simview.automatically_run is True:
             if self.simulation.state == "ready":
                 enabled = self.random_enabled_transition()
-                for transition in self.net.transitions():
-                    if transition.id in enabled:
-                        self.automatically_fire_transitions(transition)
+                if enabled == []:
+                    self.random_packet()
+                else:
+                    for transition in self.net.transitions():
+                        if transition.id in enabled:
+                            self.automatically_fire_transitions(transition)
 
     def automatically_fire_transitions(self, transition):
         perspective = self.view.get_perspective()
@@ -112,6 +116,7 @@ class SimCanvasConfig(NetViewCanvasConfig):
             return
         process_id = self.simulation.random.choice(ids)
         callback = lambda: self.automatically_run()
+        self.simview.app.console_write("Fire random transition\n")
         self.simulation.fire_transition(transition.id, process_id,
                                         self.simview.get_fire_phases(),
                                         callback)
@@ -119,8 +124,23 @@ class SimCanvasConfig(NetViewCanvasConfig):
     def random_enabled_transition(self):
         enabled = self.perspective.get_enabled_transitions()
         enabled_list = list(enabled)
-        random_tran = random.sample(enabled_list, 1)
-        return(random_tran)
+        if enabled_list is []:
+            random_tran = random.sample(enabled_list, 1)
+            return(random_tran)
+        else:
+            return(enabled_list)
+    
+    def random_packet(self, process_ids=None):
+        if process_ids is None:
+            ids = xrange(self.simulation.process_count)
+        else:
+            ids = process_ids
+        for i in ids:
+            for j in xrange(self.simulation.process_count):
+                for p in xrange(self.simulation.runinstance.get_packets_count(j, i)):
+                    callback = lambda: self.automatically_run()
+                    self.simview.app.console_write("Receive random packet\n")
+                    self.simulation.receive(i, j, callback)
 
 class SimView(gtk.VBox):
 
@@ -176,19 +196,21 @@ class SimView(gtk.VBox):
         parent = self.sequence_view.get_parent()
         
         path = self.sequence_view.get_selection_path()
-        self.sequence_view.path = path
-        self.sequence_view.unbold_row(self.sequence_view.current_iter)
         
-        self.simulation.set_state(index, branch, parent)
+        self.simulation.set_state(index, branch, path, parent)
         
+        #tadysem skoncil
     def allow_set_state(self):
-        index = self.sequence_view.get_cell(0)
-        branch = self.sequence_view.get_cell(1)
-        d = (index, branch)
-        if d in self.simulation.history_set:
-            return False
-        else:
-            return True
+        return True
+        #index = self.sequence_view.get_cell(0)
+        #branch = self.sequence_view.get_cell(1)
+        #arr = []
+        #if index is not None or branch is not None:
+        #    arr = [int(index), int(branch)]
+        #if (arr is self.sequence_view.get_current_coords()):
+        #    return False
+        #else:
+        #    return True
         
     def _history(self):
         box = gtk.VBox()
@@ -269,7 +291,8 @@ class SimView(gtk.VBox):
         button = gtk.ToolButton(None)
         button.set_tooltip_text("Stop automatically run")
         button.set_stock_id(gtk.STOCK_MEDIA_STOP)
-        button.connect("clicked", lambda w: self.stop_automatically_run)
+        #button.connect("clicked", lambda w: self.stop_automatically_run())
+        button.connect("clicked", lambda w: self.config.random_packet())
         toolbar.add(button)
         
         return toolbar

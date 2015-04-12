@@ -285,6 +285,9 @@ void Listener::process_commands(FILE *comm_in, FILE *comm_out)
 				fprintf(comm_out, "Transition waits for synchronization of collective transition\n");
 				continue;
 			}
+
+			save_state();
+
 			state->finish_transition(process_id);
 			write_status(comm_out, true);
 			continue;
@@ -359,7 +362,6 @@ void Listener::set_state(int branch, int index)
 
 	Branch *NewBranch = NULL;
 	NewBranch = new Branch();
-	NewBranch->save_state(state);
 	NewBranch->set_parent(branch, index);
 	CurrentBranch = Branches.size();
 	Branches.push_back(NewBranch);
