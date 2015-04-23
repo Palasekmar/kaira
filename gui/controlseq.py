@@ -146,6 +146,7 @@ class SequenceView(gtkutils.SimpleTree):
         self._parent = None
         self.current_iter = self.get_first_iter()
         self.path = None
+        self.setstate_phase = 0
 
     def load_sequence(self, sequence):
         self.clear()
@@ -158,33 +159,43 @@ class SequenceView(gtkutils.SimpleTree):
         self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<b><span background='green'>Fire</span></b>",
                      transition))
-        self.index_id = self.index_id + 1
-        self.expand_all_nodes()
+        self.increment_index_id()
         self.unbold_prev_row()
 
     def add_transition_start(self, process_id, transition):
         self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<b><span background='lightgreen'>StartT</span></b>",
                      transition))
-        self.index_id = self.index_id + 1
-        self.expand_all_nodes()
+        self.increment_index_id()
         self.unbold_prev_row()
 
     def add_transition_finish(self, process_id):
         self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<b><span background='#FF7070'>FinishT</span></b>",
                      ""))
-        self.index_id = self.index_id + 1
-        self.expand_all_nodes()
+        self.increment_index_id()
         self.unbold_prev_row()
 
     def add_receive(self, process_id, from_process):
         self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
                      "<b><span background='lightblue'>Receive</span></b>",
                      str(from_process)))
-        self.index_id = self.index_id + 1
-        self.expand_all_nodes()
+        self.increment_index_id()
         self.unbold_prev_row()
+        
+    def add_setstate(self, index, branch,  path):
+        self.prepend(self._parent, (str(index), str(branch), "", "<b><span background='grey'>Set state</span></b>", ""))
+        self.path = self.modify_path(path)
+        self.set_parent(self.get_iter(self.path))
+        self.unbold_prev_row()
+        self.setstate = True
+        self.path = self.modify_path(self.path)
+        
+    def new_branch(self):
+        return NULL
+    
+    def increment_index_id(self):
+        self.index_id = self.index_id + 1
     
     def set_branch_id(self, branch):
         self.branch_id = branch
@@ -203,22 +214,31 @@ class SequenceView(gtkutils.SimpleTree):
     def remove_bold_tags(self, str):
         return str[3:-4]
     
+    def make_path_to_setstate(self, n_child, path):
+        n_child = n_child - 1
+        tup = (n_child,)
+        path = path + tup
+        return(path)
+    
     def modify_path(self, path):
         path = path + (0,)
         return path
     
     def unbold_prev_row(self):
-        if self.path is not None:
-            self.unbold_row(self.get_iter(self.path))
-            path = self.modify_path(self.path)
-            self.current_iter = self.get_iter(path)
-            #path = self.modify_path(self.path)
-            #self.unbold_row(self.get_iter(path))
-            #iter = self.get_iter(path)
-            #self.current_iter = self.iter_next(iter)
-            self.path = None
-        else:
+        if self.setstate_phase is 2:
+            self.unbold_row(self._parent)
+            self.path = self.get_path(self._parent)
+            self.path = self.modify_path(self.path)
+            self._parent = self.get_iter(self.path)
+            self.setstate_phase = 1
+        elif self.setstate_phase is 1:
+            self.unbold_row(self._parent)
+            self.path = self.modify_path(self.path)
+            self.current_iter = self.get_iter(self.path)
+            self.setstate_phase = 0
+        elif self.setstate_phase is 0:
             self.unbold_row(self.current_iter)
+            print(self.get_path(self.current_iter))
             self.current_iter = self.iter_next(self.current_iter)
     
     def unbold_row(self, iter):
@@ -233,11 +253,6 @@ class SequenceView(gtkutils.SimpleTree):
         edit = self.add_bold_tags(row[3])
         newrow = (row[0], row[1], row[2], edit, row[4])
         self.update_row(path, newrow)
-    
-    def get_current_coords(self):
-        index = self.index_id - 1
-        ret = [index, self.branch_id]
-        return ret
         
 class SequenceListWidget(gtk.HPaned):
 

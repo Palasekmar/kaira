@@ -248,6 +248,7 @@ void Listener::process_commands(FILE *comm_in, FILE *comm_out)
 				continue;
 			}
 
+			printf("FIRE");
 			save_state();
 
 			bool result;
@@ -301,6 +302,7 @@ void Listener::process_commands(FILE *comm_in, FILE *comm_out)
 				continue;
 			}
 
+			printf("RECEIVE");
 			save_state();
 
 			bool result = state->receive(process_id, origin_id);
@@ -339,6 +341,7 @@ void Listener::cleanup_state()
 
 void Listener::save_state()
 {
+
 	Branch *CurrBranch = NULL;
 
 	if(Branches.empty()){

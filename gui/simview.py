@@ -96,7 +96,6 @@ class SimCanvasConfig(NetViewCanvasConfig):
                transition.box.highlight = (0, 255, 0, 0.85)
 
     def automatically_run(self):
-        time.sleep(2)
         if self.simview.automatically_run is True:
             if self.simulation.state == "ready":
                 enabled = self.random_enabled_transition()
@@ -104,8 +103,14 @@ class SimCanvasConfig(NetViewCanvasConfig):
                     self.random_packet()
                 else:
                     for transition in self.net.transitions():
-                        if transition.id in enabled:
+                        tr = self.net.transitions()
+                        print("tran id: {0}".format(transition.id))
+                        print("enabled: {0}".format(enabled[0]))
+                        if transition.id is enabled[0]:
                             self.automatically_fire_transitions(transition)
+                            print("FIRE {0}".format(transition.id))
+                            break
+                        self.automatically_run()
 
     def automatically_fire_transitions(self, transition):
         perspective = self.view.get_perspective()
@@ -116,18 +121,23 @@ class SimCanvasConfig(NetViewCanvasConfig):
             return
         process_id = self.simulation.random.choice(ids)
         callback = lambda: self.automatically_run()
-        self.simview.app.console_write("Fire random transition\n")
-        self.simulation.fire_transition(transition.id, process_id,
-                                        self.simview.get_fire_phases(),
-                                        callback)
+        if self.simulation.state == "ready":
+            self.simview.app.console_write("Fire random transition\n")
+            print("auto fire: {0}".format(self.simulation.state))
+            self.simulation.fire_transition(transition.id, process_id,
+                                            self.simview.get_fire_phases())
+            self.simulation.finish_transition(process_id, callback)
+            time.sleep(0.5)
+        else:
+            self.automatically_run()
     
     def random_enabled_transition(self):
         enabled = self.perspective.get_enabled_transitions()
         enabled_list = list(enabled)
         if enabled_list is []:
-            random_tran = random.sample(enabled_list, 1)
-            return(random_tran)
+            return NULL
         else:
+            random_tran = random.sample(enabled_list, 1)
             return(enabled_list)
     
     def random_packet(self, process_ids=None):
@@ -139,9 +149,14 @@ class SimCanvasConfig(NetViewCanvasConfig):
             for j in xrange(self.simulation.process_count):
                 for p in xrange(self.simulation.runinstance.get_packets_count(j, i)):
                     callback = lambda: self.automatically_run()
-                    self.simview.app.console_write("Receive random packet\n")
-                    self.simulation.receive(i, j, callback)
-
+                    if self.simulation.state == "ready":
+                        print("random packet: {0}".format(self.simulation.state))
+                        self.simview.app.console_write("Receive random packet\n")
+                        self.simulation.receive(i, j, callback)
+                        time.sleep(0.5)
+                    else:
+                        self.automatically_run()
+                        
 class SimView(gtk.VBox):
 
     def __init__(self, app, simulation):
@@ -179,8 +194,8 @@ class SimView(gtk.VBox):
         path = self.sequence_view.get_selection_path()
         if path is None:
             return
-        index = self.sequence_view.get_cell(0)
-        branch = self.sequence_view.get_cell(1)
+        index = self.sequence_view.get_selection_cell(0)
+        branch = self.sequence_view.get_selection_cell(1)
         self.simulation.set_runinstance_from_history(int(index), int(branch))
         
     def start_automatically_run(self):
@@ -191,26 +206,24 @@ class SimView(gtk.VBox):
         self.automatically_run = False        
     
     def set_state(self):
-        index = self.sequence_view.get_cell(0)
-        branch = self.sequence_view.get_cell(1)
+        index = self.sequence_view.get_selection_cell(0)
+        branch = self.sequence_view.get_selection_cell(1)
         parent = self.sequence_view.get_parent()
         
         path = self.sequence_view.get_selection_path()
         
         self.simulation.set_state(index, branch, path, parent)
         
-        #tadysem skoncil
     def allow_set_state(self):
-        return True
-        #index = self.sequence_view.get_cell(0)
-        #branch = self.sequence_view.get_cell(1)
-        #arr = []
-        #if index is not None or branch is not None:
-        #    arr = [int(index), int(branch)]
-        #if (arr is self.sequence_view.get_current_coords()):
-        #    return False
-        #else:
-        #    return True
+        str = self.sequence_view.get_selection_cell(3)
+        if str is None:
+            return False
+        else:
+            str = str[27:-11]
+            if str == "Set state":
+                return False
+            else:
+                return True
         
     def _history(self):
         box = gtk.VBox()
@@ -244,6 +257,7 @@ class SimView(gtk.VBox):
     def _simulation_changed(self, new_state):
         self.show_current_button.set_sensitive(not self.simulation.is_last_instance_active())
         self.set_state_button.set_sensitive(self.allow_set_state())
+        self.sequence_view.expand_all_nodes()
         if new_state:
             self.sequence_view.unselect_all()
         self.netview.set_runinstance(self.simulation.runinstance)
@@ -293,6 +307,13 @@ class SimView(gtk.VBox):
         button.set_stock_id(gtk.STOCK_MEDIA_STOP)
         #button.connect("clicked", lambda w: self.stop_automatically_run())
         button.connect("clicked", lambda w: self.config.random_packet())
+        toolbar.add(button)
+        
+        button = gtk.ToolButton(None)
+        button.set_tooltip_text("Test")
+        button.set_stock_id(gtk.STOCK_HELP)
+        #button.connect("clicked", lambda w: self.stop_automatically_run())
+        button.connect("clicked", lambda w: self.sequence_view.hide_row_by_path((0)))
         toolbar.add(button)
         
         return toolbar

@@ -314,16 +314,21 @@ class Simulation(EventSource):
                   query_reports=True):
         def callback():
             self.current_branch = self.current_branch + 1
+
+            self.sequence.view.unbold_prev_row()
+            self.sequence.view.bold_row(path)     
+            #self.sequence.view.setstate = True
             
-            self.sequence.view.set_branch_id(self.current_branch)
             self.sequence.view.set_parent(parent)
-            self.sequence.view.bold_row(path)
-            self.sequence.view.path = path
-            self.sequence.view.unbold_row(self.sequence.view.current_iter)
+            self.sequence.view.set_branch_id(self.current_branch)
             
-            self.last_setstate = []
-            add = (index, branch)
-            self.last_setstate.append(add)
+            self.sequence.view.setstate_phase = 2
+            #self.sequence.view.set_parent(parent)
+            #self.sequence.view.add_setstate(index, branch, path)
+            
+            #self.last_setstate = []
+            #add = (index, branch)
+            #self.last_setstate.append(add)
 
         if self.controller and self.check_ready():
             command = "SET_STATE {0} {1}".format(branch, index)
