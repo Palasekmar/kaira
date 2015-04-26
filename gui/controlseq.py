@@ -147,6 +147,7 @@ class SequenceView(gtkutils.SimpleTree):
         self.current_iter = self.get_first_iter()
         self.path = None
         self.setstate_phase = 0
+        self.setstate_state = False
 
     def load_sequence(self, sequence):
         self.clear()
@@ -156,43 +157,52 @@ class SequenceView(gtkutils.SimpleTree):
                          self.add_receive)
 
     def add_fire(self, process_id, transition):
-        self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
+        row_data = (str(self.index_id), str(self.branch_id), str(process_id),
                      "<b><span background='green'>Fire</span></b>",
-                     transition))
+                     transition)
+        if self.setstate_phase is 2:
+            self.prepend(self._parent, row_data)
+        else:
+            self.append(self._parent, row_data)
+            
         self.increment_index_id()
         self.unbold_prev_row()
 
     def add_transition_start(self, process_id, transition):
-        self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
+        row_data = (str(self.index_id), str(self.branch_id), str(process_id),
                      "<b><span background='lightgreen'>StartT</span></b>",
-                     transition))
+                     transition)
+        if self.setstate_phase is 2:
+            self.prepend(self._parent, row_data)
+        else:
+            self.append(self._parent, row_data)
+            
         self.increment_index_id()
         self.unbold_prev_row()
 
     def add_transition_finish(self, process_id):
-        self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
+        row_data = (str(self.index_id), str(self.branch_id), str(process_id),
                      "<b><span background='#FF7070'>FinishT</span></b>",
-                     ""))
+                     "")
+        if self.setstate_phase is 2:
+            self.prepend(self._parent, row_data)
+        else:
+            self.append(self._parent, row_data)
+            
         self.increment_index_id()
         self.unbold_prev_row()
 
     def add_receive(self, process_id, from_process):
-        self.append(self._parent, (str(self.index_id), str(self.branch_id), str(process_id),
+        row_data = (str(self.index_id), str(self.branch_id), str(process_id),
                      "<b><span background='lightblue'>Receive</span></b>",
-                     str(from_process)))
+                     str(from_process))
+        if self.setstate_phase is 2:
+            self.prepend(self._parent, row_data)
+        else:
+            self.append(self._parent, row_data)
+            
         self.increment_index_id()
         self.unbold_prev_row()
-        
-    def add_setstate(self, index, branch,  path):
-        self.prepend(self._parent, (str(index), str(branch), "", "<b><span background='grey'>Set state</span></b>", ""))
-        self.path = self.modify_path(path)
-        self.set_parent(self.get_iter(self.path))
-        self.unbold_prev_row()
-        self.setstate = True
-        self.path = self.modify_path(self.path)
-        
-    def new_branch(self):
-        return NULL
     
     def increment_index_id(self):
         self.index_id = self.index_id + 1
@@ -230,16 +240,19 @@ class SequenceView(gtkutils.SimpleTree):
             self.path = self.get_path(self._parent)
             self.path = self.modify_path(self.path)
             self._parent = self.get_iter(self.path)
+            self.setstate_state = False
             self.setstate_phase = 1
         elif self.setstate_phase is 1:
             self.unbold_row(self._parent)
             self.path = self.modify_path(self.path)
-            self.current_iter = self.get_iter(self.path)
+            if self.setstate_state is False:
+                self.current_iter = self.get_iter(self.path)
+            self.setstate_state = False
             self.setstate_phase = 0
         elif self.setstate_phase is 0:
             self.unbold_row(self.current_iter)
-            print(self.get_path(self.current_iter))
             self.current_iter = self.iter_next(self.current_iter)
+            self.setstate_state = False
     
     def unbold_row(self, iter):
         row = self.get_row(iter)

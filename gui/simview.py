@@ -219,8 +219,8 @@ class SimView(gtk.VBox):
         if str is None:
             return False
         else:
-            str = str[27:-11]
-            if str == "Set state":
+            str = str[:3]
+            if str == "<b>":
                 return False
             else:
                 return True
