@@ -9,11 +9,6 @@
 
 using namespace ca;
 
-/*Branch::Branch(){
-	History = new vector<State*>;
-	parent = 0;
-}*/
-
 void Branch::save_state(State *state){
 	State *NewState = NULL;
 	NewState = new State(*state);

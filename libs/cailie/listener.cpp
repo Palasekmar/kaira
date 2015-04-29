@@ -339,7 +339,6 @@ void Listener::cleanup_state()
 
 void Listener::save_state()
 {
-
 	Branch *CurrBranch = NULL;
 
 	if(Branches.empty()){
@@ -359,7 +358,10 @@ void Listener::set_state(int branch, int index)
 {
 	Branch *CurrBranch = NULL;
 	CurrBranch = Branches[branch];
+
 	state = CurrBranch->set_state(index);
+	State * NewState = new State(*state);
+	state = NewState;
 
 	Branch *NewBranch = NULL;
 	NewBranch = new Branch();

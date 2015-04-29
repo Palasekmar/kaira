@@ -54,8 +54,6 @@ class Listener {
 		int CurrentBranch;
 		std::vector<Branch*> Branches;
 
-		//std::vector<State*> History;
-
 };
 
 }

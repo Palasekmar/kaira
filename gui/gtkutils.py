@@ -206,7 +206,6 @@ class SimpleListBase(gtk.ScrolledWindow):
     def hide_headers(self):
         self.view.set_headers_visible(False)
         
-    #My
     def get_selection_cell (self, column):
         model ,i = self.view.get_selection().get_selected()
         if i is not None:
@@ -247,13 +246,6 @@ class SimpleListBase(gtk.ScrolledWindow):
     
     def get_n_children(self, iter):
         return self.store.iter_n_children(iter)
-    
-    def hide_row_by_path(self, path):
-        #filter_iter = self.store.get_iter(path)
-        #filter_iter = self.view.get_selection().get_selected()[1]
-        #store_iter = self.store.convert_iter_to_child_iter(filter_iter)
-        iter = self.get_iter(path)
-        self.store[iter] = False
 
 class SimpleList(SimpleListBase):
 

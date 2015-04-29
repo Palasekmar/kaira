@@ -134,7 +134,7 @@ class Simulation(EventSource):
                 runinstance.event_send(origin_id, 0, target_id, size, edge_id)
 
             runinstance.reset_last_event_info()
-            #ZDE
+
             self.setstate_state = False;
             self.runinstance = runinstance
             self.history_instances.append(runinstance)
