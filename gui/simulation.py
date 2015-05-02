@@ -315,9 +315,12 @@ class Simulation(EventSource):
         def callback():
             self.current_branch = self.current_branch + 1
 
-            self.sequence.view.setstate_state = True
+            if self.sequence.view.setstate_phase is 2:
+                self.sequence.view.setstate_phase = 3
+            
             self.sequence.view.unbold_prev_row()
-            self.sequence.view.bold_row(path)     
+            self.sequence.view.bold_row(path)
+            self.sequence.view.setstate_state = True
             
             self.sequence.view.set_parent(parent)
             self.sequence.view.set_branch_id(self.current_branch)

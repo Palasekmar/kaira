@@ -235,7 +235,11 @@ class SequenceView(gtkutils.SimpleTree):
         return path
     
     def unbold_prev_row(self):
-        if self.setstate_phase is 2:
+        if self.setstate_phase is 3:
+            self.unbold_row(self._parent)
+            self.setstate_state = False
+            self.setstate_phase = 2
+        elif self.setstate_phase is 2:
             self.unbold_row(self._parent)
             self.path = self.get_path(self._parent)
             self.path = self.modify_path(self.path)

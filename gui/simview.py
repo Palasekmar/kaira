@@ -229,7 +229,6 @@ class SimView(gtk.VBox):
         
         path = self.sequence_view.get_selection_path()
         
-        print(self.allow_finish_transition())
         self.config.finish_transition_state = self.allow_finish_transition()
         
         self.simulation.set_state(index, branch, path, parent)
