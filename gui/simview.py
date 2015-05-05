@@ -45,10 +45,13 @@ class SimCanvasConfig(NetViewCanvasConfig):
     simulation = None
     simview = None
     autmatic_run = False
-    ready = True
+    ready = False
     finish_transition_state = False
 
     def on_item_click(self, item, position):
+        if self.ready is True:
+            self.simview.app.console_write("You cannot control simulation, until automatically simulation running!\n", "error")
+            return
         if item.kind == "box" and item.owner.is_transition():
             self.fire_transition(item.owner)
         elif item.kind == "activation":
@@ -71,6 +74,7 @@ class SimCanvasConfig(NetViewCanvasConfig):
     def check_last_active(self):
         if not self.simulation.is_last_instance_active():
             self.simview.app.console_write("A history of simulation is displayed, it cannot be changed\n", "error")
+            self.simview.stop_automatically_run()
             return False
         else:
             return True
@@ -250,7 +254,6 @@ class SimView(gtk.VBox):
             return False
         else:
             str = str[30:-7]
-            print(str)
             if str == "StartT":
                 return True
             else:
